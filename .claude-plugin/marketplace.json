@@ -1,0 +1,44 @@
+{
+	"name": "osrs-wiki-mcp-server",
+	"description": "Marketplace registering the OSRS Wiki MCP server as an installable Claude Code plugin.",
+	"version": "1.0.0",
+	"owner": {
+		"name": "mistereman22",
+		"url": "https://github.com/mistereman22"
+	},
+	"plugins": [
+		{
+			"name": "osrs-wiki-mcp-server",
+			"source": ".",
+			"description": "MCP server for the Old School RuneScape Wiki: the full MediaWiki MCP tool surface (pinned, read-only) plus rate-limited hardcoded tools for external non-MediaWiki APIs.",
+			"version": "1.0.0",
+			"category": "mcp",
+			"tags": [
+				"mcp",
+				"mediawiki",
+				"osrs",
+				"runescape",
+				"wiki"
+			],
+			"userConfig": {
+				"MCP_CONTACT": {
+					"type": "string",
+					"title": "Your contact (appended to the User-Agent)",
+					"description": "How to reach you (an email, or name + URL), appended to the server's base User-Agent on every OSRS wiki request, e.g. you@example.com.",
+					"required": true
+				}
+			},
+			"mcpServers": {
+				"osrs-wiki-mcp-server": {
+					"command": "node",
+					"args": [
+						"${CLAUDE_PLUGIN_ROOT}/src/index.js"
+					],
+					"env": {
+						"MCP_CONTACT": "${user_config.MCP_CONTACT}"
+					}
+				}
+			}
+		}
+	]
+}
