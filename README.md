@@ -2,50 +2,16 @@
 
 MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`). Serves the full tool surface of [`@professional-wiki/mediawiki-mcp-server`](https://github.com/ProfessionalWiki/MediaWiki-MCP-Server) against a pinned, read-only wiki definition.
 
-```
-Client (Claude Code / OpenCode / Cursor)
-        |  MCP over stdio
-        v
-src/index.js (server name "osrs-wiki-mcp-server")
-        |-- upstream MediaWiki tools -> OSRS wiki API (read-only)
-```
-
-## What you get
-
 | Capability | Details |
 | --- | --- |
-| MediaWiki tools | Full upstream tool surface (page reads, search, watchlists, siteinfo, ...) with wiki fixed to `oldschool.runescape.wiki`. Write and wiki-management tools gated off (`readOnly: true`, `allowWikiManagement: false`). |
+| MediaWiki tools | Full upstream tool surface (page reads, search, watchlists, siteinfo, ...) with wiki fixed to `oldschool.runescape.wiki`. **Read-only** - write and wiki-management tools are gated off. |
 | `context://bucket-index` | On-demand hint list of known Bucket buckets for `bucket-query`; read fresh per request with runtime discovery as fallback. |
 
-## Requirements
+## Quick start (users)
 
-- **Node.js >= 22.19.0** (required by upstream `undici` dependency)
-- `npm install` in this directory
+**Requirement:** Node.js >= 22.19.0
 
-## Configuration
-
-| Variable | Required | Meaning |
-| --- | --- | --- |
-| `MCP_CONTACT` | **Yes** | Your contact (email or name + URL), appended to the server's base User-Agent on every OSRS wiki request. Example: `you@example.com`. Server fails fast at startup if missing. |
-
-No config file, no wiki selection - the target (`oldschool.runescape.wiki`, article path `/wiki`, anonymous, read-only) is part of the package.
-
-## Run directly (any MCP client)
-
-```sh
-npm install
-MCP_CONTACT="you@example.com" node src/index.js
-```
-
-Composed User-Agent:
-```
-osrs-wiki-mcp-server/1.0.0 (https://github.com/mistereman22/osrs-wiki-mcp-server) you@example.com
-```
-
-## OpenCode
-
-Add to global config (`~/.config/opencode/opencode.json`):
-
+### OpenCode
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
@@ -53,7 +19,7 @@ Add to global config (`~/.config/opencode/opencode.json`):
     "servers": {
       "osrs-wiki": {
         "type": "local",
-        "command": ["npx", "@mistereman22/osrs-wiki-mcp-server"],
+        "command": ["npx", "@mistereman22/osrs-wiki-mcp-server@1.0.0"],
         "environment": { "MCP_CONTACT": "you@example.com" }
       }
     }
@@ -61,41 +27,44 @@ Add to global config (`~/.config/opencode/opencode.json`):
 }
 ```
 
-Or via CLI:
-```sh
-opencode mcp add --global osrs-wiki \
-  --env MCP_CONTACT="you@example.com" \
-  -- npx @mistereman22/osrs-wiki-mcp-server
-```
-
-## Cursor
-
-Create `~/.cursor/mcp.json` (user) or `.cursor/mcp.json` (project):
-
+### Cursor
 ```json
 {
   "mcpServers": {
     "osrs-wiki": {
       "command": "npx",
-      "args": ["@mistereman22/osrs-wiki-mcp-server"],
+      "args": ["@mistereman22/osrs-wiki-mcp-server@1.0.0"],
       "env": { "MCP_CONTACT": "you@example.com" }
     }
   }
 }
 ```
 
-## Claude Code (marketplace)
-
+### Claude Code
 ```sh
 /plugin marketplace add mistereman22/osrs-wiki-mcp-server
 /plugin install osrs-wiki-mcp-server@osrs-wiki-mcp-server
 ```
 
-On install, Claude Code prompts for `MCP_CONTACT` and injects it automatically.
+### Run directly
+```sh
+MCP_CONTACT="you@example.com" npx @mistereman22/osrs-wiki-mcp-server@1.0.0
+```
+
+## Configuration
+
+| Variable | Required | Meaning |
+| --- | --- | --- |
+| `MCP_CONTACT` | **Yes** | Your contact (email or name + URL), appended to the server's base User-Agent on every OSRS wiki request. Example: `you@example.com`. Server fails fast at startup if missing. |
+
+## Composed User-Agent
+```
+osrs-wiki-mcp-server/1.0.0 (https://github.com/mistereman22/osrs-wiki-mcp-server) you@example.com
+```
 
 ## Rate limits
 
-Two independent sliding-window budgets (tuned in `src/rateLimit.js`):
+Two independent sliding-window budgets (tuned in `src/server.ts`):
 
 | Surface | Budget | Counted per |
 | --- | --- | --- |
@@ -104,39 +73,48 @@ Two independent sliding-window budgets (tuned in `src/rateLimit.js`):
 
 Over budget: waits up to 10s for a slot, then returns rate-limit error with retry hint.
 
-## Lifecycle
+## Development
 
-- Wiki identity probed lazily via siteinfo; extension-gated tools enabled after initial reconcile
-- Read-only rule permanently removes write tools from `tools/list`
-- `SIGINT`/`SIGTERM` drain in-flight work, close stdio, exit cleanly
-- Startup fails fast if `MCP_CONTACT` unset
+### Requirements
+- Node.js >= 22.19.0
+- `npm install` in this directory
 
-## Repository layout
+### Commands
+```sh
+npm run build   # TypeScript -> dist/
+npm start       # Run built server (requires MCP_CONTACT)
+npm run dev     # Build + run
+```
 
+### Repository layout
 ```
 .
 +-- src/
-|   +-- index.js          # Entry point: env gate, stdio transport, lifecycle
-|   +-- env.js            # MCP_CONTACT fail-fast gate + User-Agent composition
-|   +-- meta.js           # Package identity (name, version, repo, base User-Agent)
-|   +-- rateLimit.js      # Sliding-window budgets for both surfaces
-|   +-- server.js         # McpServer assembly + tool gating + wiki config
-|   +-- resources.js      # Generic resource loader (bucket-index)
-|   +-- tools/
-|       +-- external.js   # HTTP utilities (callHttp) for future external APIs
+|   +-- index.ts          # Entry point: env gate, stdio transport, lifecycle
+|   +-- env.ts            # MCP_CONTACT fail-fast gate + User-Agent composition
+|   +-- server.ts         # McpServer assembly + tool gating + wiki config + rate limiting
+|   +-- resources.ts      # Generic resource loader (bucket-index)
+|   +-- external.ts       # HTTP utilities (callHttp) for future external APIs
+|   +-- declarations.d.ts # Type declarations for upstream JS-only package
 +-- resources/
 |   +-- bucket-index.md   # Bucket hint list for context://bucket-index
 +-- .claude-plugin/
 |   +-- marketplace.json  # Claude Code marketplace manifest
++-- dist/                 # Compiled output (generated by build)
 +-- package.json
-+-- opencode.json         # OpenCode config example
++-- tsconfig.json
 +-- README.md
 +-- LICENSE
 ```
 
-## Contact
+### Rate limit constants
+Tuned in `src/server.ts`:
+- `WINDOW_MS = 60_000` (60s window)
+- `MAX_WAIT_MS = 10_000` (max 10s wait)
+- `WIKI_MAX_REQUESTS = 30`
+- `EXTERNAL_MAX_REQUESTS = 30`
 
-Base User-Agent in every request points here:
+## Contact
 - Maintainer: [github.com/mistereman22](https://github.com/mistereman22)
 - Issues: [github.com/mistereman22/osrs-wiki-mcp-server/issues](https://github.com/mistereman22/osrs-wiki-mcp-server/issues)
 

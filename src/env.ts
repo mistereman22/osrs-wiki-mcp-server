@@ -4,8 +4,9 @@
  */
 import process from 'node:process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
-const pkg = createRequire(import.meta.url)('../../package.json') as {
+const pkg = createRequire(import.meta.url)(fileURLToPath(new URL('../package.json', import.meta.url))) as {
 	version?: string;
 	description?: string;
 	repository?: { url?: string };
