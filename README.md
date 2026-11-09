@@ -19,7 +19,7 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
     "servers": {
       "osrs-wiki": {
         "type": "local",
-        "command": ["npx", "@mistereman22/osrs-wiki-mcp-server@1.0.0"],
+        "command": ["npx", "@mistereman22/osrs-wiki-mcp-server"],
         "environment": { "MCP_CONTACT": "you@example.com" }
       }
     }
@@ -33,7 +33,7 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
   "mcpServers": {
     "osrs-wiki": {
       "command": "npx",
-      "args": ["@mistereman22/osrs-wiki-mcp-server@1.0.0"],
+      "args": ["@mistereman22/osrs-wiki-mcp-server"],
       "env": { "MCP_CONTACT": "you@example.com" }
     }
   }
@@ -48,7 +48,7 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
 
 ### Run directly
 ```sh
-MCP_CONTACT="you@example.com" npx @mistereman22/osrs-wiki-mcp-server@1.0.0
+MCP_CONTACT="you@example.com" npx @mistereman22/osrs-wiki-mcp-server
 ```
 
 ## Configuration
@@ -59,7 +59,7 @@ MCP_CONTACT="you@example.com" npx @mistereman22/osrs-wiki-mcp-server@1.0.0
 
 ## Composed User-Agent
 ```
-osrs-wiki-mcp-server/1.0.0 (https://github.com/mistereman22/osrs-wiki-mcp-server) you@example.com
+osrs-wiki-mcp-server/<version> (https://github.com/mistereman22/osrs-wiki-mcp-server) you@example.com
 ```
 
 ## Rate limits
