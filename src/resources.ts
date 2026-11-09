@@ -18,7 +18,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'tool-selection',
 		uri: 'context://tool-selection',
-		file: fileURLToPath(new URL('../../resources/tool-selection.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/tool-selection.md', import.meta.url)),
 		title: 'Tool Selection Guide',
 		description:
 			'Top-level routing: which tool to use for each question type. Decision tree mapping queries to tools + required resources. Read this FIRST.',
@@ -27,7 +27,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'bucket-catalog',
 		uri: 'context://bucket-catalog',
-		file: fileURLToPath(new URL('../../resources/bucket-catalog.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/bucket-catalog.md', import.meta.url)),
 		title: 'Bucket Catalog',
 		description:
 			'Complete reference list of all known Bucket buckets on the OSRS Wiki with query names, page titles, and contents. For usage patterns, see bucket-query-guide.',
@@ -36,7 +36,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'bucket-query-guide',
 		uri: 'context://bucket-query-guide',
-		file: fileURLToPath(new URL('../../resources/bucket-query-guide.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/bucket-query-guide.md', import.meta.url)),
 		title: 'Bucket Query Guide',
 		description:
 			'How to use bucket-query effectively: when to use it, mandatory best practices, exact-match rules, common patterns, limitations, and troubleshooting.',
@@ -45,7 +45,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'namespace-category-guide',
 		uri: 'context://namespace-category-guide',
-		file: fileURLToPath(new URL('../../resources/namespace-category-guide.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/namespace-category-guide.md', import.meta.url)),
 		title: 'Namespace & Category Guide',
 		description:
 			'Category structure, namespace IDs, DPL/template discovery workflow for get-category-members, get-site-info, get-links-here. When to use category vs search.',
@@ -54,7 +54,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'search-guide',
 		uri: 'context://search-guide',
-		file: fileURLToPath(new URL('../../resources/search-guide.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/search-guide.md', import.meta.url)),
 		title: 'Search Guide',
 		description:
 			'Tool selection, broad-first search strategy, canonical page heuristic, section discovery for search-page, search-page-by-prefix, get-page. Includes decision tree and fallback chain.',
@@ -63,7 +63,7 @@ const RESOURCES: ResourceConfig[] = [
 	{
 		name: 'page-structure',
 		uri: 'context://page-structure',
-		file: fileURLToPath(new URL('../../resources/page-structure.md', import.meta.url)),
+		file: fileURLToPath(new URL('../resources/page-structure.md', import.meta.url)),
 		title: 'Page Structure Guide',
 		description:
 			'Page types, key sections, infobox-to-bucket mapping for get-page. Redirects, disambiguation, large page strategy, common prefixes.',
@@ -86,6 +86,8 @@ export function registerResources(server: McpServer): void {
 				mimeType: resource.mimeType,
 			},
 			async (uri: string | URL) => {
+				const requestUri = typeof uri === 'string' ? uri : uri.href;
+				logger.debug(`Reading resource: ${resource.name} (request URI: ${requestUri}) from ${resource.file}`);
 				try {
 					const text = await readFile(resource.file, 'utf8');
 					const href = typeof uri === 'string' ? uri : uri.href;
