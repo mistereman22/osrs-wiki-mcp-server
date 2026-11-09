@@ -37,6 +37,13 @@
 
 ## Finding Pages - Strategy
 
+### 0. Search hit a canonical index page? Fetch it.
+```bash
+search-page "2026 game updates"
+# Result: "Game updates" - snippet shows chronological list
+get-page "Game updates"   # ← Do this first
+```
+
 ### 1. Known exact title? Use `get-page` directly
 ```bash
 get-page "Abyssal whip"

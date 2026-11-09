@@ -95,6 +95,34 @@ get-page "Chest (Tombs of Amascut)" section=2   # Unique drops
 | Browse category | get-page | `get-page "Category:Bosses"` |
 | Find exact title variant | search-page-by-prefix | `search-page-by-prefix "Tumeken"` |
 
+## Canonical Page Heuristic
+
+### When search returns an obvious index/list page → FETCH IT IMMEDIATELY
+
+If a search result's **title** and **snippet** together indicate it's the canonical aggregation page for your topic, stop searching and `get-page` it.
+
+| Signal | Example |
+|--------|---------|
+| Title = plural/category name | `"Game updates"`, `"Quest list"`, `"Item sets"` |
+| Snippet shows dated/structured entries | `"lists Easter 2026, Cow Boss, Getting Around Poll in chronological order"` |
+| Title matches your query intent exactly | Search `"2026 updates"` → result `"Game updates"` |
+
+### Anti-pattern to avoid
+```
+search-page "Game update 2026"
+  → result: "Game updates" (snippet: "lists Easter 2026, Cow Boss...")
+  → ❌ KEEP SEARCHING for "2026 update" "Easter 2026" etc.
+  → ✅ get-page "Game updates"  ← canonical page, has everything
+```
+
+### Why this works
+- Wiki index pages (Game updates, Quest list, Monster drop tables) are **curated, complete, and maintained**
+- Search snippets often reveal the exact structure (chronological, by tier, by category)
+- One `get-page` > 5+ `search-page` calls (rate limit, context, accuracy)
+
+### Quick test
+> "Does this result look like *the* page a human would bookmark for this topic?" → Yes → `get-page`
+
 ## Rate Limit Awareness
 
 - Each search tool call counts toward MediaWiki rate limit (30/min)
