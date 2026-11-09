@@ -1,6 +1,31 @@
-# Search Strategies
+# Search Guide
 
-> When and how to use each search tool effectively.
+> Tool selection, broad-first search, canonical page heuristic, section discovery for `search-page`, `search-page-by-prefix`, `get-page`.
+
+## Tool Selection Decision Tree (START HERE)
+
+```
+User asks a question
+│
+├─ Structured data? (stats, prices, drops, requirements, gear, varbits)
+│   → bucket-query (read context://bucket-query-guide)
+│
+├─ Canonical list? (all bosses, all quests, all items, all updates)
+│   → get-category-members (read context://namespace-category-guide)
+│
+├─ Custom namespace list? (game updates in Update:, calculators)
+│   → get-site-info + get-category-members (read context://namespace-category-guide)
+│
+├─ Exact page title known?
+│   → get-page directly
+│
+├─ Know start of title? (e.g., "Abyssal ", "Dragon ")
+│   → search-page-by-prefix "Prefix"
+│
+└─ General topic / keywords / unstructured content?
+    → search-page with BROAD query + high limit (50-100)
+      → Check results for canonical index page → get-page that page
+```
 
 ## Tool Comparison
 
@@ -10,18 +35,34 @@
 | `search-page-by-prefix` | Known prefix, autocomplete | Page titles only (no snippets) |
 | `get-page` (metadata) | Get section outline of known page | Section headings + numbers |
 
-## Decision Tree
+## Broad-First Search Strategy
 
+**Start with a broad query + high limit to find the canonical page, then narrow.**
+
+| Approach | Query | Limit | Why |
+|----------|-------|-------|-----|
+| ❌ Too specific | `"2026 game updates"` | 10 | Misses "Game updates" page |
+| ✅ Broad first | `"game updates"` | 50-100 | Finds canonical page immediately |
+| ✅ Broad first | `"updates"` | 50 | Even broader, catches "Game updates" |
+
+### Why this works
+- `search-page` max limit = **100** (default 10). One broad call with `limit=100` costs same as narrow call.
+- Canonical index pages (e.g., "Game updates", "Quest list") rank high for broad terms.
+- Snippets in broad results reveal structure → you pick the right page → one `get-page`.
+
+### Workflow
 ```
-Need to find a page?
-│
-├─ Know exact title? → get-page "Exact Title"
-│
-├─ Know start of title? → search-page-by-prefix "Prefix"
-│
-├─ General topic / keywords? → search-page "keywords"
-│
-└─ Want to browse a category? → get-page "Category:Name"
+1. search-page "updates" limit=100
+   → #2: "Game updates" (snippet: "chronological list of all game updates")
+2. get-page "Game updates"          ← canonical page, has everything
+3. (if needed) get-page "Game updates" section=3  ← specific year
+```
+
+### Anti-pattern
+```
+search-page "2026 game updates" limit=10  → misses canonical page
+search-page "Easter 2026 update"          → too narrow, fragments context
+search-page "Cow Boss update"             → too narrow
 ```
 
 ## search-page Best Practices
@@ -130,9 +171,19 @@ search-page "Game update 2026"
 - Use `metadata=true` + `section=N` to minimize page read calls
 - Cache results mentally within a conversation - don't re-search
 
+## DPL / Template Pages
+
+If `get-page` returns `<dpl>` tags or `{{Template}}` transclusions — **the data isn't there**. See `context://namespace-category-guide` → "Dynamic Content Patterns" for the workflow:
+
+1. `get-site-info` → find namespace ID
+2. `get-category-members` with category + namespace
+3. `get-pages` for details
+
+Common on OSRS: Game updates (`Update:` namespace 1198), calculators, module outputs.
+
 ## Fallback Chain
 
-1. **bucket-query** (if structured data exists) → check `context://bucket-index`
+1. **bucket-query** (if structured data exists) → check `context://bucket-catalog`
 2. **search-page-by-prefix** (if you know title prefix)
 3. **search-page** (general topic)
 4. **get-page + metadata** (large page, need specific section)
