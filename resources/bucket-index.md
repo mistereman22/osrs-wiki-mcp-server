@@ -19,13 +19,13 @@
 | `bucket("bountytaskline")` | Bucket:Bountytaskline | Bounty Hunter task line entries |
 | `bucket("clue_equipment")` | Bucket:Clue equipment | Equipment associated with clue scroll steps |
 | `bucket("clue_info")` | Bucket:Clue info | Clue scroll metadata/step info |
-| `bucket("collection_log_source")` | Bucket:Collection log source | Sources for collection log slots |
+| `bucket("collection_log_source")` | Bucket:Collection log source | Collection log sources per item: item_id, item_name, sources (repeated wikilinks), rates, kinds. **Only queryable by item_name** - cannot filter by source. To find "what drops from X", use the source page directly. |
 | `bucket("combat_achievement")` | Bucket:Combat achievement | Combat achievement tasks, tiers, requirements |
 | `bucket("couriertaskline")` | Bucket:Couriertaskline | Courier activity task line entries |
 | `bucket("demonicpactleaguetask")` | Bucket:Demonicpactleaguetask | Demonic Pact league task entries |
 | `bucket("dependency_list")` | Bucket:Dependency list | Item/object dependency relations |
-| `bucket("drop_table_sources")` | Bucket:Drop table sources | Which activities/NPCs use which drop tables |
-| `bucket("dropsline")` | Bucket:Dropsline | Drop table line entries per source |
+| `bucket("drop_table_sources")` | Bucket:Drop table sources | Shared drop tables (rare drop table, gem drop table, herb drop table) and their roll/rarity data. Not specific monster/boss drop tables. |
+| `bucket("dropsline")` | Bucket:Dropsline | Drop table line entries: item_name, drop_json (JSON text with "Dropped from", rarity, quantity), rare_drop_table. **Only queryable by item_name** - cannot filter by source. To find "what drops from X", use the source page (boss/chest/activity) directly. |
 | `bucket("exchange")` | Bucket:Exchange | Grand Exchange prices (name, value, high/low, volumes) |
 | `bucket("feedback")` | Bucket:Feedback | Wiki feedback entries (site-internal) |
 | `bucket("ge_index_header")` | Bucket:Ge index header | Grand Exchange index header/snapshot metadata |
@@ -130,5 +130,18 @@ bucket("infobox_shop").select("shop_name","location").limit(50).continueFrom("cu
 2. Use exact name in `bucket-query` with `.where()`
 
 Example: "best gear for hydra" → `bucket("recommended_equipment").select("item","slot").where("activity","hydra").run()`
+
+### Raid/Group Drop Patterns (use get-page, NOT buckets)
+
+No bucket supports "what drops from source" queries. For raid/group content, use `get-page` on individual source pages:
+
+| Content | Query |
+|---------|-------|
+| Tombs of Amascut (ToA) | `get-page "Chest (Tombs of Amascut)"` then `get-page "Tumeken's Warden"`, `get-page "Akkha"`, etc. |
+| Chambers of Xeric (CoX) | `get-page "Chambers of Xeric"` then individual boss pages (Olm, Great Olm, etc.) |
+| Theatre of Blood (ToB) | `get-page "Theatre of Blood"` then individual boss pages (Maiden, Bloat, Nylocas, Sotetseg, Xarpus, Verzik) |
+| General boss drops | `get-page "<Boss Name>"` (e.g., "Zulrah", "Vorkath", "Phantom Muspah") |
+
+For large pages: `get-page "<Title>" metadata=true` → get section outline → `get-page "<Title>" section=N` for drops section.
 
 Use page reads (`get-page`, `search-page`) ONLY for unstructured content: lore, mechanics, walkthroughs.

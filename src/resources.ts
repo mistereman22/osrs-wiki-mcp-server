@@ -24,15 +24,24 @@ const RESOURCES: ResourceConfig[] = [
 			'Curated hint list of known Bucket buckets on the OSRS wiki (names, query forms, purposes). Not authoritative - if nothing matches, fall back to discovery via search-page-by-prefix in the Bucket: namespace.',
 		mimeType: 'text/markdown',
 	},
-	// Add more resources here:
-	// {
-	// 	name: 'my-resource',
-	// 	uri: 'context://my-resource',
-	// 	file: fileURLToPath(new URL('../../resources/my-file.txt', import.meta.url)),
-	// 	title: 'My Resource',
-	// 	description: 'Description for the model',
-	// 	mimeType: 'text/plain',
-	// },
+	{
+		name: 'wiki-navigation',
+		uri: 'context://wiki-navigation',
+		file: fileURLToPath(new URL('../../resources/wiki-navigation.md', import.meta.url)),
+		title: 'Wiki Navigation Guide',
+		description:
+			'How to find pages on the OSRS Wiki: namespaces, category structure, redirect handling, disambiguation patterns, and page structure by type.',
+		mimeType: 'text/markdown',
+	},
+	{
+		name: 'search-strategies',
+		uri: 'context://search-strategies',
+		file: fileURLToPath(new URL('../../resources/search-strategies.md', import.meta.url)),
+		title: 'Search Strategies',
+		description:
+			'When and how to use search-page, search-page-by-prefix, and get-page metadata for efficient wiki queries. Includes decision tree and common patterns.',
+		mimeType: 'text/markdown',
+	},
 ];
 
 import type { McpServer } from '@modelcontextprotocol/server';
