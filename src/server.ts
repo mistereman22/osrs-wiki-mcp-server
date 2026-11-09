@@ -159,11 +159,23 @@ const OSRS_WIKI = Object.freeze({
 const CACHE_HINT = { ttlMs: 60_000, cacheScope: 'private' as const };
 
 const SERVER_INSTRUCTIONS = [
-	`Tools and resources for the Old School RuneScape Wiki at ${OSRS_WIKI.server}, served by ${SERVER_NAME}.`,
+	'Tools and resources for the Old School RuneScape Wiki at ' + OSRS_WIKI.server + ', served by ' + SERVER_NAME + '.',
 	'The wiki target is fixed by the package: no tool can add, remove, or switch wikis.',
-	`Deployment is read-only and anonymous. Outbound calls use User-Agent \`${BASE_USER_AGENT} <MCP_CONTACT>\`.`,
+	'Deployment is read-only and anonymous. Outbound calls use User-Agent `' + BASE_USER_AGENT + ' <MCP_CONTACT>\`.',
 	'MediaWiki tools follow upstream behavior from @professional-wiki/mediawiki-mcp-server.',
-	'For structured data prefer `bucket-query`; use `context://bucket-index` to discover buckets, fall back to runtime discovery.',
+	'For structured data (item/monster stats, prices, drops, quest info, gear recommendations) PREFER \'bucket-query\' over reading wiki pages: buckets return semantic rows directly. To pick a bucket, read the \'context://bucket-index\' resource (curated hint list, costs no API traffic); if it has no match or a name fails, fall back to runtime discovery - \'search-page-by-prefix\' in the Bucket: namespace, then \'get-page\' for the schema.',
+	'CRITICAL: ALWAYS use .select() and .where() in bucket-query. NEVER run unfiltered queries - they return thousands of rows, bloat context, and strain the wiki. ALWAYS use .select("field1","field2") to limit columns and .where("field","value") to filter rows. Use .limit(N) for pagination.',
+	'bucket-query uses EXACT MATCH ONLY - no wildcards. To find exact values: 1) search-page for the term, 2) use exact result in bucket-query. Example: "Bob\'s Axe Shop" -> search-page "bob axe" -> gets "Bob\'s Brilliant Axes" -> bucket("infobox_shop").where("shop_name","Bob\'s Brilliant Axes")',
+	'Common bucket-query patterns (ALWAYS include .select() and .where()):',
+	'  * Gear -> bucket("recommended_equipment").select("item","slot").where("activity","hydra").run()',
+	'  * GE prices -> bucket("exchange").select("name","value","high_alch").where("name","Abyssal whip").run()',
+	'  * Monster stats -> bucket("infobox_monster").select("name","combat_level","hitpoints").where("name","Hydra").run()',
+	'  * Item stats -> bucket("infobox_item").select("item_name","value","high_alch").where("item_name","Abyssal whip").run()',
+	'  * Drop sources -> bucket("dropsline").select("source","quantity").where("item","Abyssal whip").run()',
+	'  * Quest requirements -> bucket("quest").select("name","requirements").where("name","Dragon Slayer I").run()',
+	'  * Varbits -> bucket("varbit").select("name","value").where("name","hydra_task").run()',
+	'  * Shop lookup -> bucket("infobox_shop").select("shop_name","location","owner").where("shop_name","Bob\'s Brilliant Axes").run()',
+	'Use page reads (\'get-page\', \'search-page\') ONLY for unstructured content: lore, mechanics, walkthroughs.',
 	'Outbound traffic is rate-limited; calls over budget wait or return rate-limit error.',
 ].join(' ');
 

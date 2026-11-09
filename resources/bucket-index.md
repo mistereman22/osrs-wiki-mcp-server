@@ -33,14 +33,14 @@
 | `bucket("infobox_bonuses")` | Bucket:Infobox bonuses | Equipment combat stats and bonuses |
 | `bucket("infobox_construction")` | Bucket:Infobox construction | Construction object/buildable data |
 | `bucket("infobox_grid_master_unlock")` | Bucket:Infobox grid master unlock | Grid Master unlock data |
-| `bucket("infobox_item")` | Bucket:Infobox item | Core item data: id, name, examine, flags, stats |
+| `bucket("infobox_item")` | Bucket:Infobox item | Core item data: item_name, item_id, examine, high_alchemy_value, value, weight, buy_limit, is_members_only, tradeable, image, league_region, release_date, removal_date, value, weight, high_alchemy_value, buy_limit, default_version, quest, version_anchor, is_members_only, tradeable |
 | `bucket("infobox_location")` | Bucket:Infobox location | Location/area data |
-| `bucket("infobox_monster")` | Bucket:Infobox monster | Monster combat stats: level, hitpoints, max hit |
+| `bucket("infobox_monster")` | Bucket:Infobox monster | Monster combat stats: name, combat_level, hitpoints, max_hit, slayer_level, slayer_experience, slayer_category, assigned_by, attack/defence bonuses (stab/slash/crush/magic/range), attack_speed, hitpoints, max_hit, poisonous, attribute, attack_style, attack_speed, respawn_time, experience_bonus, flat_armour, magic_resistance, size, attack/strength/defence/ranged/magic levels, attack_bonus, strength_bonus, range_strength_bonus, magic_damage_bonus, poison/venom/freeze/burn/cannon/thrall resistance, elemental_weakness, elemental_weakness_percent |
 | `bucket("infobox_npc")` | Bucket:Infobox npc | NPC data: id, combat level, examine |
 | `bucket("infobox_pure")` | Bucket:Infobox pure | Pure-entity infobox data (verify schema) |
 | `bucket("infobox_scenery")` | Bucket:Infobox scenery | Scenery/object entity data |
 | `bucket("infobox_ship_part")` | Bucket:Infobox ship part | Ship part data |
-| `bucket("infobox_shop")` | Bucket:Infobox shop | Shop stock and prices |
+| `bucket("infobox_shop")` | Bucket:Infobox shop | Shop data: shop_name, location, owner, specialty, shop_version, is_members_only |
 | `bucket("infobox_spell")` | Bucket:Infobox spell | Spell data: requirements, effects, costs |
 | `bucket("interface")` | Bucket:Interface | Game interface definitions |
 | `bucket("item_id")` | Bucket:Item id | Item name to id mappings |
@@ -58,7 +58,7 @@
 | `bucket("object_id")` | Bucket:Object id | Object/scenery id mappings |
 | `bucket("quest")` | Bucket:Quest | Quest data: requirements, rewards, difficulty |
 | `bucket("recipe")` | Bucket:Recipe | Creation/processing recipes: inputs, outputs, skills |
-| `bucket("recommended_equipment")` | Bucket:Recommended equipment | Recommended gear setups by activity/slot |
+| `bucket("recommended_equipment")` | Bucket:Recommended equipment | Recommended gear setups by activity/slot (schema not available on page - use runtime discovery) |
 | `bucket("seachart")` | Bucket:Seachart | Sea chart/naval data |
 | `bucket("sound_effect")` | Bucket:Sound effect | Sound effect metadata |
 | `bucket("soundtrack")` | Bucket:Soundtrack | Soundtrack track data |
@@ -75,3 +75,60 @@
   with `=`, `!=`, `>`, `<`, `>=`, `<=`; compose with `Bucket.And/Or/Not`.
 - Example: `bucket("infobox_item").select("item_id","examine").where("item_name","Raw lobster").run()`
 - Full Lua reference: https://meta.weirdgloop.org/w/Extension:Bucket/Usage
+
+## Best Practices (MANDATORY)
+
+- **ALWAYS use `.select("field1","field2")`** - only fetch needed columns
+- **ALWAYS use `.where("field","value")`** - filter rows, never fetch all
+- **Use `.limit(N)`** - cap results (max 500)
+- **Chain filters** with `Bucket.And/Or/Not` for complex conditions
+- **NEVER** run `.run()` without `.select()` and `.where()`
+
+### Exact Match Only - No Wildcards
+
+bucket-query uses **exact match only**. To find exact values:
+1. `search-page` for the term → get exact name
+2. Use exact name in bucket query
+
+Example: "Bob's Axe Shop" → `search-page "bob axe"` → "Bob's Brilliant Axes" → `bucket("infobox_shop").where("shop_name","Bob's Brilliant Axes")`
+
+### Example Patterns
+
+✅ Good:
+```
+bucket("exchange").select("name","value","high_alch").where("name","Abyssal whip").run()
+bucket("infobox_shop").select("shop_name","location").where("location","Lumbridge").limit(5).run()
+```
+
+❌ Bad (causes context bloat):
+```
+bucket("infobox_shop").run()
+bucket("exchange").select("*").run()
+```
+
+### Pagination
+```lua
+bucket("infobox_shop").select("shop_name","location").limit(50).continueFrom("cursor").run()
+```
+
+### Common Bucket Patterns (Always use .select() and .where())
+
+| Task | Bucket Query |
+|------|--------------|
+| GE prices | `bucket("exchange").select("name","value","high_alch").where("name","Abyssal whip").run()` |
+| Monster stats | `bucket("infobox_monster").select("name","combat_level","hitpoints").where("name","Hydra").run()` |
+| Item stats | `bucket("infobox_item").select("item_name","value","high_alch").where("item_name","Abyssal whip").run()` |
+| Drop sources | `bucket("dropsline").select("source","quantity").where("item","Abyssal whip").run()` |
+| Quest requirements | `bucket("quest").select("name","requirements").where("name","Dragon Slayer I").run()` |
+| Varbits | `bucket("varbit").select("name","value").where("name","hydra_task").run()` |
+| Shop lookup | `bucket("infobox_shop").select("shop_name","location","owner").where("shop_name","Bob's Brilliant Axes").run()` |
+| Gear recommendations | `bucket("recommended_equipment").select("item","slot").where("activity","hydra").run()` |
+
+### Workflow: Find Exact Values First
+
+1. **search-page** for term → get exact name
+2. Use exact name in `bucket-query` with `.where()`
+
+Example: "best gear for hydra" → `bucket("recommended_equipment").select("item","slot").where("activity","hydra").run()`
+
+Use page reads (`get-page`, `search-page`) ONLY for unstructured content: lore, mechanics, walkthroughs.

@@ -83,7 +83,7 @@ export async function callHttp(request: CallHttpRequest): Promise<CallHttpResult
 	const url = parseHttpUrl(request.url);
 	try {
 		await externalLimiter.acquire();
-	} catch (error) {
+	} catch (error: unknown) {
 		if (error instanceof RateLimitError) {
 			throw new HttpToolError(error.message);
 		}
