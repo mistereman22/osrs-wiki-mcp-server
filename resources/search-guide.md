@@ -1,39 +1,6 @@
 # Search Guide
 
-> Tool selection, broad-first search, canonical page heuristic, section discovery for `search-page`, `search-page-by-prefix`, `get-page`.
-
-## Tool Selection Decision Tree (START HERE)
-
-```
-User asks a question
-│
-├─ Structured data? (stats, prices, drops, requirements, gear, varbits)
-│   → bucket-query (read context://bucket-query-guide)
-│
-├─ Canonical list? (all bosses, all quests, all items, all updates)
-│   → get-category-members (read context://namespace-category-guide)
-│
-├─ Custom namespace list? (game updates in Update:, calculators)
-│   → get-site-info + get-category-members (read context://namespace-category-guide)
-│
-├─ Exact page title known?
-│   → get-page directly
-│
-├─ Know start of title? (e.g., "Abyssal ", "Dragon ")
-│   → search-page-by-prefix "Prefix"
-│
-└─ General topic / keywords / unstructured content?
-    → search-page with BROAD query + high limit (50-100)
-      → Check results for canonical index page → get-page that page
-```
-
-## Tool Comparison
-
-| Tool | Use Case | Returns |
-|------|----------|---------|
-| `search-page` | General topic, keyword, phrase | Page titles + snippets (full-text) |
-| `search-page-by-prefix` | Known prefix, autocomplete | Page titles only (no snippets) |
-| `get-page` (metadata) | Get section outline of known page | Section headings + numbers |
+> Broad-first search, canonical page heuristic, section discovery for `search-page`, `search-page-by-prefix`, `get-page`.
 
 ## Broad-First Search Strategy
 
@@ -67,37 +34,21 @@ search-page "Cow Boss update"             → too narrow
 
 ## search-page Best Practices
 
-### Do:
-- Use specific keywords: `"hydra gear setup"` not `"hydra"`
-- Include context: `"prayer flicking technique"` not `"prayer"`
+- Use specific keywords with context: `"hydra gear setup"` not `"hydra"`, `"prayer flicking technique"` not `"prayer"`
 - Use quotes for exact phrases: `"/roll"` or `"drop rate"`
-
-### Don't:
-- Use single generic words: `"item"`, `"boss"`, `"quest"`
-- Overuse - check bucket-index first for structured data
-
-### Result Interpretation:
-- Snippet shows match context - verify it's the right page
-- Page ID/size/timestamp help gauge relevance
-- Namespace 0 = main content (what you want)
-
-## search-page-by-prefix Best Practices
-
-### Do:
-- Use when you know the prefix: `"Abyssal "`, `"Dragon "`, `"Barbarian "`
-- Short prefixes return more results: `"Dra"` vs `"Dragon "`
-- Combine with namespace filter for categories: `namespace: 14`
-
-### Don't:
-- Use for general topics (use `search-page`)
-- Expect snippets - only titles returned
+- Avoid single generic words: `"item"`, `"boss"`, `"quest"`
+- Check snippets to verify relevance; namespace 0 = main content
+- `search-page-by-prefix`: use when you know the prefix (`"Abyssal "`, `"Dragon "`); returns titles only (no snippets)
 
 ## get-page for Section Discovery
 
-### Before reading a large page:
+### Size check (do this first for unknown pages):
 ```bash
 get-page "Chest (Tombs of Amascut)" metadata=true
 ```
+If page size >75KB, use section-based reading (below) instead of full fetch.
+
+### Then get section outline:
 
 ### Returns:
 ```json
@@ -120,21 +71,6 @@ get-page "Chest (Tombs of Amascut)" section=2   # Unique drops
 
 ### Section 0 = Lead (intro text)
 ### Section N = Heading N in the article
-
-## Common Search Patterns
-
-| Goal | Tool | Query |
-|------|------|-------|
-| Item stats/price | bucket-query | `bucket("exchange").select(...).where("name","...")` |
-| Monster stats | bucket-query | `bucket("infobox_monster").select(...).where("name","...")` |
-| Where item drops from | bucket-query | `bucket("dropsline").select(...).where("item_name","...")` |
-| What boss drops | get-page + metadata | `get-page "Boss Name" metadata=true` → `section=N` |
-| Quest requirements | bucket-query | `bucket("quest").select(...).where("name","...")` |
-| Gear for activity | bucket-query | `bucket("recommended_equipment").select(...).where("activity","...")` |
-| Shop location/items | bucket-query | `bucket("infobox_shop").select(...).where("shop_name","...")` |
-| General mechanic/guide | search-page | `search-page "prayer flicking"` |
-| Browse category | get-page | `get-page "Category:Bosses"` |
-| Find exact title variant | search-page-by-prefix | `search-page-by-prefix "Tumeken"` |
 
 ## Canonical Page Heuristic
 
@@ -166,25 +102,22 @@ search-page "Game update 2026"
 
 ## Rate Limit Awareness
 
-- Each search tool call counts toward MediaWiki rate limit (30/min)
-- Prefer bucket-query for structured data (same limit, but returns exact data)
-- Use `metadata=true` + `section=N` to minimize page read calls
-- Cache results mentally within a conversation - don't re-search
+- 30 calls/min across all MediaWiki tools; prefer bucket-query for structured data
+- Use `metadata=true` + `section=N` to minimize page reads; don't re-search within a conversation
 
-## DPL / Template Pages
+## Dynamic Content (DPL / Templates / Rendered Values)
 
-If `get-page` returns `<dpl>` tags or `{{Template}}` transclusions — **the data isn't there**. See `context://namespace-category-guide` → "Dynamic Content Patterns" for the workflow:
-
-1. `get-site-info` → find namespace ID
-2. `get-category-members` with category + namespace
-3. `get-pages` for details
-
-Common on OSRS: Game updates (`Update:` namespace 1198), calculators, module outputs.
+If `get-page` returns `<dpl>` tags or `{{...}}` transclusions — the data isn't in that page:
+- **DPL / template discovery workflow** → `context://namespace-category-guide`
+- **Rendered values (live GE prices, etc.)** → `context://template-reference`
+- **View-page rule**: if source is mostly `{{...}}` soup, render with `parse-wikitext` instead of parsing raw wikitext
+- **Don't search `Template:` or `Module:` namespaces** unless looking for template/module documentation
 
 ## Fallback Chain
 
-1. **bucket-query** (if structured data exists) → check `context://bucket-catalog`
-2. **search-page-by-prefix** (if you know title prefix)
-3. **search-page** (general topic)
-4. **get-page + metadata** (large page, need specific section)
-5. **get-page** (full page, last resort)
+1. **bucket-query** (if structured/static data exists) → check `context://bucket-catalog`
+2. **parse-wikitext** (if you need a rendered value) → see `context://template-reference`
+3. **search-page-by-prefix** (if you know title prefix)
+4. **search-page** (general topic)
+5. **get-page + metadata** (large page, need specific section)
+6. **get-page** (full page, last resort)

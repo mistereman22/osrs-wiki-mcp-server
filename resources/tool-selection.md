@@ -7,28 +7,17 @@
 ```
 User asks a question
 │
-├─ Structured data? (stats, prices, drops, requirements, gear, varbits, IDs)
+├─ Structured data? (stats, drops, requirements, gear, varbits, IDs, GE metadata)
 │   → bucket-query
 │   → Read: context://bucket-query-guide
-│
-├─ Canonical list? (all bosses, all quests, all items, all updates)
-│   → get-category-members
-│   → Read: context://namespace-category-guide
-│
-├─ Custom namespace list? (game updates, calculators)
-│   → get-site-info + get-category-members
-│   → Read: context://namespace-category-guide
 │
 ├─ Exact title known?
 │   → get-page
 │
-├─ Know title prefix? (e.g., "Abyssal ", "Dragon ")
-│   → search-page-by-prefix
-│   → Read: context://search-guide
-│
-└─ General topic / unstructured content? (lore, mechanics, guides)
-    → search-page (broad query + high limit)
-    → Check for canonical page → get-page
+└─ Otherwise (lists, partial titles, general topics)
+    ├─ Canonical list? (all bosses, all quests, all items) → get-category-members
+    ├─ Know title prefix? (e.g., "Abyssal ") → search-page-by-prefix
+    └─ General topic / unstructured content → search-page (broad query + high limit)
     → Read: context://search-guide
 ```
 
@@ -37,9 +26,10 @@ User asks a question
 | Tool | Primary Resource | Secondary |
 |------|------------------|-----------|
 | `bucket-query` | `context://bucket-query-guide` | `context://bucket-catalog` |
+| `parse-wikitext` | `context://template-reference` | — |
 | `get-category-members` | `context://namespace-category-guide` | — |
 | `get-site-info` | `context://namespace-category-guide` | — |
-| `get-page` | `context://search-guide` (section discovery) | `context://page-structure` |
+| `get-page` | `context://search-guide` (section discovery) | — |
 | `search-page` | `context://search-guide` | — |
 | `search-page-by-prefix` | `context://search-guide` | — |
 | `get-links-here` | `context://namespace-category-guide` | — |
@@ -48,9 +38,11 @@ User asks a question
 
 ### Bucket Query (structured data)
 ```lua
--- Item price/stats
-bucket("exchange").select("name","value","high_alch").where("name","Abyssal whip").run()
+-- Item static stats
 bucket("infobox_item").select("item_name","value","high_alch","weight").where("item_name","Abyssal whip").run()
+
+-- Live GE price
+parse-wikitext "{{GEPrice|Abyssal whip}}"
 
 -- Monster stats
 bucket("infobox_monster").select("name","combat_level","hitpoints","max_hit").where("name","Hydra").run()
@@ -58,8 +50,9 @@ bucket("infobox_monster").select("name","combat_level","hitpoints","max_hit").wh
 -- Drop sources for item
 bucket("dropsline").select("item_name","drop_json").where("item_name","Abyssal whip").run()
 
--- Quest requirements
-bucket("quest").select("name","requirements").where("name","Dragon Slayer I").run()
+-- Quest requirements (use templates)
+parse-wikitext "{{Questreq|Dragon Slayer I|quests}}"
+parse-wikitext "{{Questreq|Dragon Slayer I|skills}}"
 
 -- Gear for activity
 bucket("recommended_equipment").select("item","slot").where("activity","hydra").run()
@@ -69,6 +62,10 @@ bucket("varbit").select("name","value").where("name","hydra_task").run()
 
 -- Shop
 bucket("infobox_shop").select("shop_name","location","owner").where("shop_name","Bob's Brilliant Axes").run()
+
+-- Money making at boss/method (use search → get-page)
+search-page "money making vorkath"
+get-page "Money making guide/Killing Vorkath"
 ```
 
 ### Category Members (canonical lists)

@@ -4,19 +4,19 @@
 
 ## Namespaces
 
-| Namespace ID | Prefix | Purpose |
-|--------------|--------|---------|
-| 0 | (none) | Main content pages (items, monsters, quests, bosses, mechanics) |
-| 1 | Talk: | Discussion pages |
-| 2 | User: | User pages |
-| 6 | File: | Images/media |
-| 10 | Template: | Templates |
-| 14 | Category: | Category listings |
-| 9592 | Bucket: | Bucket extension schemas (use `context://bucket-catalog` first) |
-| 1198 | Update: | Game updates (DPL-driven lists) |
-| 1199 | Update_talk: | Update discussion |
-| 1200 | Calculator: | Calculators |
-| 828 | Module: | Lua modules |
+| Namespace ID | Prefix | Purpose | Query Via |
+|--------------|--------|---------|-----------|
+| 0 | (none) | Main content pages (items, monsters, quests, bosses, mechanics) | `get-page` / `search-page` |
+| 1 | Talk: | Discussion pages | — |
+| 2 | User: | User pages | — |
+| 6 | File: | Images/media | `get-links-here type="fileusage"` |
+| 10 | Template: | Templates | `get-links-here type="transclusions"` |
+| 14 | Category: | Category listings | `get-category-members` |
+| 9592 | Bucket: | Bucket extension schemas | `context://bucket-catalog` first |
+| 1198 | Update: | Game updates (DPL-driven) | `get-category-members "Updates" namespaces=[1198]` |
+| 1199 | Update_talk: | Update discussion | — |
+| 1200 | Calculator: | Calculators | `get-category-members "Calculators" namespaces=[1200]` |
+| 828 | Module: | Lua modules | `get-page "Module:Name"` |
 
 > **Tip**: Run `get-site-info` for the full namespace map — custom namespaces vary by wiki.
 
@@ -86,17 +86,7 @@ Main pages often just include templates (e.g., `{{RecentUpdates}}`, `{{Updates}}
 | Pattern | Action |
 |---------|--------|
 | `{{TemplateName}}` in page source | `get-page "Template:TemplateName"` |
-| `{{#invoke:ModuleName|function}}` | `get-page "Module:ModuleName"` |
-
-### Namespaces as Content Types
-
-Custom namespaces often map 1:1 to content types.
-
-| OSRS Namespace | Content Type | Query Via |
-|----------------|--------------|-----------|
-| `Update:` (1198) | Game updates | `get-category-members "Updates" namespaces=[1198]` |
-| `Calculator:` | Calculators | `get-category-members "Calculators" namespaces=[1200]` |
-| `Module:` | Lua modules | `get-page "Module:Name"` |
+| `{{#invoke:ModuleName\|function}}` | **Lua renders data at parse time — it exists only in output.** Render with `parse-wikitext` (prefer a template if one exists — see context://template-reference) |
 
 ### Categories as Canonical Indexes
 

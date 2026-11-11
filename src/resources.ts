@@ -61,12 +61,12 @@ const RESOURCES: ResourceConfig[] = [
 		mimeType: 'text/markdown',
 	},
 	{
-		name: 'page-structure',
-		uri: 'context://page-structure',
-		file: fileURLToPath(new URL('../resources/page-structure.md', import.meta.url)),
-		title: 'Page Structure Guide',
+		name: 'template-reference',
+		uri: 'context://template-reference',
+		file: fileURLToPath(new URL('../resources/template-reference.md', import.meta.url)),
+		title: 'Template Reference',
 		description:
-			'Page types, key sections, infobox-to-bucket mapping for get-page. Redirects, disambiguation, large page strategy, common prefixes.',
+			'Verified data-retrieval templates for parse-wikitext: GE prices, alchemy values, currency formatting, quest requirements, drop tables, bucket rendering. Prefer templates over bare #invoke.',
 		mimeType: 'text/markdown',
 	},
 ];
