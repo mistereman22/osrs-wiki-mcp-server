@@ -11,6 +11,8 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
 
 **Requirement:** Node.js >= 22.19.0
 
+**Before you start:** Replace the empty `MCP_CONTACT` values below with your own email or name + URL. The server requires this and will exit if not set.
+
 ### OpenCode
 ```json
 {
@@ -20,7 +22,7 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
       "osrs-wiki": {
         "type": "local",
         "command": ["npx", "@mistereman22/osrs-wiki-mcp-server"],
-        "environment": { "MCP_CONTACT": "you@example.com" }
+        "environment": { "MCP_CONTACT": "" }
       }
     }
   }
@@ -34,7 +36,7 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
     "osrs-wiki": {
       "command": "npx",
       "args": ["@mistereman22/osrs-wiki-mcp-server"],
-      "env": { "MCP_CONTACT": "you@example.com" }
+      "env": { "MCP_CONTACT": "" }
     }
   }
 }
@@ -46,9 +48,15 @@ MCP server for the Old School RuneScape Wiki (`https://oldschool.runescape.wiki`
 /plugin install osrs-wiki-mcp-server@osrs-wiki-mcp-server
 ```
 
+Then set your contact:
+```sh
+# Add to your shell profile (e.g., ~/.bashrc, ~/.zshrc)
+export MCP_CONTACT="your-contact@example.com"
+```
+
 ### Run directly
 ```sh
-MCP_CONTACT="you@example.com" npx @mistereman22/osrs-wiki-mcp-server
+MCP_CONTACT="" npx @mistereman22/osrs-wiki-mcp-server
 ```
 
 ## Configuration
